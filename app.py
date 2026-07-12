@@ -42,37 +42,35 @@ if uploaded_file is not None:
 
 st.divider()
 
+# Main search inputs
 col1, col2 = st.columns(2)
-
 with col1:
-    job_title = st.text_input("Job Title")
-
+    job_title = st.text_input("🔍 Job Title", placeholder="e.g. Python Developer")
 with col2:
-    location = st.text_input("Location")
+    location = st.text_input("📍 Location", placeholder="e.g. Sangli, Remote")
 
-st.subheader("Filters")
+# Advanced filters grouped inside a collapsible expander
+with st.expander("⚙️ Advanced Search Filters", expanded=False):
+    col_f1, col_f2 = st.columns(2)
+    with col_f1:
+        employment_filter = st.selectbox(
+            "💼 Employment Type",
+            [
+                "All",
+                "FULLTIME",
+                "PARTTIME",
+                "CONTRACTOR",
+                "INTERN"
+            ]
+        )
+    with col_f2:
+        keyword_filter = st.text_input("🏢 Company Name (Optional)", placeholder="e.g. Amazon")
 
-col1, col2 = st.columns(2)
+st.write("")  # Visual spacing
 
-with col1:
-    employment_filter = st.selectbox(
-        "Employment Type",
-        [
-            "All",
-            "FULLTIME",
-            "PARTTIME",
-            "CONTRACTOR",
-            "INTERN"
-        ]
-    )
-
-with col2:
-    keyword_filter = st.text_input("Company Name (Optional)")
-
-if st.button("🔍 Search Jobs", use_container_width=True):
-
+# Primary styled button for the main search action
+if st.button("🔍 Search Jobs", use_container_width=True, type="primary"):
     query = job_title
-
     if location:
         query += f" jobs in {location}"
 
@@ -80,9 +78,7 @@ if st.button("🔍 Search Jobs", use_container_width=True):
         st.session_state.jobs = search_jobs(query)
 
 filtered = []
-
 for job in st.session_state.jobs:
-
     if employment_filter != "All":
         types = job.get("job_employment_types") or []
         if employment_filter not in types:
@@ -95,7 +91,14 @@ for job in st.session_state.jobs:
 
     filtered.append(job)
 
-st.success(f"Showing {len(filtered)} jobs")
+st.write("")  # Visual spacing
 
-for job in filtered:
-    display_job_card(job)
+# Clean presentation of search results and initial states
+if filtered:
+    st.subheader(f"💼 Match Results ({len(filtered)})")
+    for job in filtered:
+        display_job_card(job)
+elif st.session_state.jobs:
+    st.warning("⚠️ No jobs found matching the selected filters.")
+else:
+    st.info("💡 Enter a job title and location above and click 'Search Jobs' to get started!")
