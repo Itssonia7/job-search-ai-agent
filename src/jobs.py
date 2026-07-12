@@ -2,12 +2,12 @@ import os
 import requests
 import streamlit as st
 from dotenv import load_dotenv
-
+print("API Key Loaded:", bool(RAPIDAPI_KEY))
 load_dotenv()
 
 # Read from Streamlit Secrets first, then .env
 API_KEY = st.secrets.get("RAPIDAPI_KEY", os.getenv("RAPIDAPI_KEY"))
-API_HOST = st.secrets.get("RAPIDAPI_HOST", os.getenv("RAPIDAPI_HOST", "jsearch-mega.p.rapidapi.com"))
+API_HOST = st.secrets.get("RAPIDAPI_HOST", os.getenv("RAPIDAPI_HOST", "jsearch.p.rapidapi.com"))
 
 
 MOCK_JOBS = [
