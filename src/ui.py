@@ -1,7 +1,41 @@
 import hashlib
 import streamlit as st
+import sqlite3
 from src.ai import analyze_job
 
+def save_job(job):
+    conn = sqlite3.connect("jobs.db")
+    cursor = conn.cursor()
+
+    salary = "Not disclosed"
+    if job.get("job_min_salary") and job.get("job_max_salary"):
+        salary = f"{job['job_min_salary']} - {job['job_max_salary']}"
+
+    try:
+        cursor.execute(
+            """
+            INSERT INTO saved_jobs
+            (job_title, company, location, employment, salary, apply_link)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                job.get("job_title"),
+                job.get("employer_name"),
+                job.get("job_city"),
+                job.get("job_employment_type"),
+                salary,
+                job.get("job_apply_link"),
+            ),
+        )
+
+        conn.commit()
+        st.success("✅ Job saved successfully!")
+
+    except sqlite3.IntegrityError:
+        st.warning("⚠️ This job is already saved.")
+
+    finally:
+        conn.close()
 
 def display_job_card(job):
     title = job.get("job_title", "N/A")
@@ -21,7 +55,7 @@ def display_job_card(job):
 
     with st.container(border=True):
 
-        col1, col2 = st.columns([5, 1])
+        col1, col2, col3 = st.columns([5, 1, 1])
 
         with col1:
             st.subheader(title)
@@ -33,6 +67,10 @@ def display_job_card(job):
         with col2:
             if apply_link:
                 st.link_button("Apply", apply_link)
+
+        with col3:
+            if st.button("💾 Save", key=f"save_{unique_key}"):
+               save_job(job)
 
         col_b1, col_b2 = st.columns(2) if st.session_state.get("resume_text") else (st.columns(1) + [None])
 
