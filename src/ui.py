@@ -2,14 +2,13 @@ import hashlib
 import streamlit as st
 import sqlite3
 from src.ai import analyze_job
+from src.utils import format_salary
 
 def save_job(job):
     conn = sqlite3.connect("jobs.db")
     cursor = conn.cursor()
 
-    salary = "Not disclosed"
-    if job.get("job_min_salary") and job.get("job_max_salary"):
-        salary = f"{job['job_min_salary']} - {job['job_max_salary']}"
+    salary = format_salary(job)
 
     try:
         cursor.execute(
@@ -44,10 +43,7 @@ def display_job_card(job):
     employment = job.get("job_employment_type", "N/A")
     apply_link = job.get("job_apply_link")
 
-    salary = "Not disclosed"
-
-    if job.get("job_min_salary") and job.get("job_max_salary"):
-        salary = f"{job['job_min_salary']} - {job['job_max_salary']}"
+    salary = format_salary(job)
 
     unique_key = hashlib.md5(
         f"{title}_{company}_{city}_{apply_link}".encode("utf-8")
