@@ -74,7 +74,7 @@ MOCK_JOBS = [
 ]
 
 
-def search_jobs(query):
+def fetch_jobs_from_api(query):
     url = f"https://{API_HOST}/search"
 
     headers = {
@@ -88,31 +88,71 @@ def search_jobs(query):
         "num_pages": 1
     }
 
+    response = requests.get(
+        url,
+        headers=headers,
+        params=params,
+        timeout=20
+    )
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    return data.get("data", [])
+
+
+def filter_jobs(jobs, work_mode="Any", notice_period="Any"):
+    filtered = []
+
+    for job in jobs:
+        if work_mode != "Any":
+            location = (
+                job.get("job_city", "")
+                + " "
+                + job.get("job_employment_type", "")
+            ).lower()
+
+            if work_mode == "Remote":
+                if "remote" not in location:
+                    continue
+
+            elif work_mode == "Hybrid":
+                if "hybrid" not in location:
+                    continue
+
+            elif work_mode == "On-site":
+                if "remote" in location:
+                    continue
+
+        filtered.append(job)
+
+    return filtered
+
+
+def search_jobs(query, work_mode="Any", notice_period="Any"):
     try:
-        response = requests.get(
-            url,
-            headers=headers,
-            params=params,
-            timeout=20
-        )
-
-        response.raise_for_status()
-
-        data = response.json()
-
-        return data.get("data", [])
+        jobs = fetch_jobs_from_api(query)
 
     except Exception as e:
-        error_msg = str(e)
-        st.warning(f"⚠️ API Access Error: {error_msg}")
-        st.info("💡 Falling back to mock jobs to allow testing of the search, filters, and Gemini AI analysis.")
-        
-        # Return mock jobs matching the query if possible
+        st.warning(f"⚠️ API Access Error: {e}")
+        st.info("Using mock jobs.")
+
         query_lower = query.lower()
-        matched = []
-        for job in MOCK_JOBS:
-            if (job["employer_name"].lower() in query_lower or
-                job["job_title"].lower() in query_lower or
-                job["job_city"].lower() in query_lower):
-                matched.append(job)
-        return matched if matched else MOCK_JOBS
+
+        jobs = [
+            job
+            for job in MOCK_JOBS
+            if query_lower in job["job_title"].lower()
+            or query_lower in job["employer_name"].lower()
+            or query_lower in job["job_city"].lower()
+        ]
+
+        if not jobs:
+            jobs = MOCK_JOBS
+
+    return filter_jobs(
+        jobs,
+        work_mode,
+        notice_period
+    )
