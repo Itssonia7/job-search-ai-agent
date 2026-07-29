@@ -73,7 +73,6 @@ MOCK_JOBS = [
     }
 ]
 
-
 def fetch_jobs_from_api(query):
     url = f"https://{API_HOST}/search"
 
@@ -103,34 +102,12 @@ def fetch_jobs_from_api(query):
 
 
 def filter_jobs(jobs, work_mode="Any", notice_period="Any"):
-    filtered = []
-
-    for job in jobs:
-        if work_mode != "Any":
-            location = (
-                job.get("job_city", "")
-                + " "
-                + job.get("job_employment_type", "")
-            ).lower()
-
-            if work_mode == "Remote":
-                if "remote" not in location:
-                    continue
-
-            elif work_mode == "Hybrid":
-                if "hybrid" not in location:
-                    continue
-
-            elif work_mode == "On-site":
-                if "remote" in location:
-                    continue
-
-        filtered.append(job)
-
-    return filtered
+    # Currently no additional filtering.
+    # The API query itself handles Remote/Hybrid searches.
+    return jobs
 
 
-def search_jobs(query, work_mode="Any", notice_period="Any"):
+def search_jobs(query):
     try:
         jobs = fetch_jobs_from_api(query)
 
@@ -151,8 +128,4 @@ def search_jobs(query, work_mode="Any", notice_period="Any"):
         if not jobs:
             jobs = MOCK_JOBS
 
-    return filter_jobs(
-        jobs,
-        work_mode,
-        notice_period
-    )
+    return jobs
