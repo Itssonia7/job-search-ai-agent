@@ -42,8 +42,12 @@ def display_job_card(job):
     city = job.get("job_city") or "Not specified"
     employment = job.get("job_employment_type", "N/A")
     apply_link = job.get("job_apply_link")
-
     salary = format_salary(job)
+
+    # -------- NEW --------
+    benefits = job.get("job_benefits_strings", [])
+    is_remote = job.get("job_is_remote", False)
+    # ---------------------
 
     unique_key = hashlib.md5(
         f"{title}_{company}_{city}_{apply_link}".encode("utf-8")
@@ -54,42 +58,98 @@ def display_job_card(job):
         col1, col2, col3 = st.columns([5, 1, 1])
 
         with col1:
+
             st.subheader(title)
+
             st.write(f"🏢 **Company:** {company}")
             st.write(f"📍 **Location:** {city}")
             st.write(f"💼 **Employment:** {employment}")
             st.write(f"💰 **Salary:** {salary}")
 
+            # ---------- NEW ----------
+            if is_remote:
+                st.success("🌍 Remote Job")
+            else:
+                st.info("🏢 On-site / Hybrid")
+
+            if benefits:
+                st.markdown("### 🎁 Benefits")
+
+                cols = st.columns(2)
+
+                for i, benefit in enumerate(benefits):
+                    cols[i % 2].write(f"✅ {benefit}")
+
+            else:
+                st.caption("No benefits listed.")
+            # -------------------------
+
         with col2:
             if apply_link:
-                st.link_button("Apply", apply_link)
+                st.link_button(
+                    "Apply",
+                    apply_link,
+                    use_container_width=True,
+                )
 
         with col3:
-            if st.button("💾 Save", key=f"save_{unique_key}"):
-               save_job(job)
+            if st.button(
+                "💾 Save",
+                key=f"save_{unique_key}",
+                use_container_width=True,
+            ):
+                save_job(job)
 
-        col_b1, col_b2 = st.columns(2) if st.session_state.get("resume_text") else (st.columns(1) + [None])
+        if st.session_state.get("resume_text"):
 
-        with col_b1:
-            if st.button("✨ Analyze with AI", key=f"ai_{unique_key}", use_container_width=True):
-                with st.spinner("Analyzing with Gemini..."):
-                    analysis = analyze_job(job)
-                st.markdown(analysis)
+            ai1, ai2 = st.columns(2)
 
-        if col_b2 is not None:
-            with col_b2:
-                if st.button("📊 Analyze Resume Fit", key=f"fit_{unique_key}", use_container_width=True):
+            with ai1:
+
+                if st.button(
+                    "✨ Analyze with AI",
+                    key=f"ai_{unique_key}",
+                    use_container_width=True,
+                ):
+                    with st.spinner("Analyzing..."):
+                        analysis = analyze_job(job)
+
+                    st.markdown(analysis)
+
+            with ai2:
+
+                if st.button(
+                    "📊 Analyze Resume Fit",
+                    key=f"fit_{unique_key}",
+                    use_container_width=True,
+                ):
                     from src.ai import analyze_resume_match
-                    with st.spinner("Matching resume with Gemini..."):
-                        fit_analysis = analyze_resume_match(st.session_state.resume_text, job)
-                    display_resume_analysis(fit_analysis)
+
+                    with st.spinner("Matching Resume..."):
+                        fit = analyze_resume_match(
+                            st.session_state.resume_text,
+                            job,
+                        )
+
+                    display_resume_analysis(fit)
+
+        else:
+
+            if st.button(
+                "✨ Analyze with AI",
+                key=f"ai_{unique_key}",
+                use_container_width=True,
+            ):
+                with st.spinner("Analyzing..."):
+                    analysis = analyze_job(job)
+
+                st.markdown(analysis)
 
         description = job.get("job_description")
 
         if description:
-            with st.expander("Job Description"):
+            with st.expander("📄 Job Description"):
                 st.write(description)
-
 
 def display_resume_analysis(analysis_text):
     """Parses and renders the Gemini resume-to-job analysis output with a premium Streamlit UI."""
