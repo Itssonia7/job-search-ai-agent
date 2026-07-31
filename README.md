@@ -105,15 +105,7 @@ streamlit run app.py
 ```
 The application will open automatically in your browser at `http://localhost:8501`.
 
----
 
-## 📸 Screenshots
-
-| Onboarding & Search Dashboard | Premium ATS Analysis Report |
-| :---: | :---: |
-| *[Insert Search Screenshot]* | *[Insert Analysis Report Screenshot]* |
-
----
 
 ## 🔮 Future Scope
 
